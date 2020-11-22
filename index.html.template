@@ -1,0 +1,258 @@
+<html>
+  <head>
+  <style>
+    body {
+      font-family: Verdana, sans-serif;
+    }
+
+    #title {
+      text-align: center;
+    }
+
+    #package-name {
+      width: 300px;
+    }
+
+    #main-report {
+      width: 700px;
+      height:700px;
+      border-bottom: 2px solid black;
+      border-left: 2px solid black;
+      position: absolute;
+      left: 100px;
+      top: 100px;
+      background-color: #EEE;
+      border-top: 5px solid #EEE;
+      border-right: 5px solid #EEE;
+    }
+
+    #main-report:after{
+      content:"Main Sequence";
+      text-align: center;
+      color: red;
+      position:absolute;
+      border-top:2px solid red;
+      width:990px;
+      transform: rotate(45deg);
+      transform-origin: 0% 0%;
+    }
+
+    #zone-of-pain {
+      position: absolute;
+      top: 750px;
+      left:150px;
+      z-index:50;
+    }
+
+    #zone-of-uselessness {
+      position: absolute;
+      top: 150px;
+      left:600px;
+      z-index:50;
+    }
+
+    #A {
+      left: 50px;
+      top:350px;
+    }
+
+    #I {
+      left: 350px;
+      top:750px;
+    }
+
+    #A,#I {
+      position: absolute;
+      font-weight: bold;
+      font-size: 26px;
+    }
+
+    .point {
+      position: absolute;
+      border: 5px solid darkblue;
+      z-index: 98;
+      border-radius: 50%;
+    }
+
+    [data-tooltip]:before {
+    /* needed - do not touch */
+    content: attr(data-tooltip);
+    position: absolute;
+    opacity: 0;
+
+    /* customizable */
+    transition: all 0.15s ease;
+    padding: 10px;
+    color: #333;
+    border-radius: 10px;
+    box-shadow: 2px 2px 1px silver;
+  }
+
+  [data-tooltip]:hover:before {
+      /* needed - do not touch */
+      opacity: 1;
+
+      /* customizable */
+      background: lightgrey;
+      z-index:99;
+      margin-top: -50px;
+      margin-left: 20px;
+  }
+
+  [data-tooltip]:not([data-tooltip-persistent]):before {
+      pointer-events: none;
+  }
+
+  #details {
+    position: absolute;
+    left: 900px;
+  }
+
+  #average,#median {
+    font-weight: bold;
+    font-size: 22px;
+  }
+
+
+  </style>
+  </head>
+  <body>
+    <h1 id="title">Distance from main sequence</h1>
+    <div id="zone-of-pain">Zone of Pain</div>
+    <div id="zone-of-uselessness">Zone of Uselessness</div>
+    <div id="A">A</div>
+    <div id="main-report">
+    <div id="I">I</div>
+    </div>
+    <div id="details">
+      <h1>Details</h1>
+      <div id="generic-info">
+      <h2>General</h2>
+        <p>Average distance from Main Sequence: <span id="average"></span></p>
+        <p>Median distance from Main Sequence: <span id="median"></span></p>
+      </div>
+      <hr>
+      <div id="package-search">
+        <label for="package-name">Package Search: </label>
+        <input id="package-name" onkeydown="search(this)" placeholder="Type part of a package name and press enter...">
+      </div>
+      <div id="package-info">
+        <h2>Package</h2>
+        <p>Click on the dots or search for a package to see details...</p>
+      </div>
+    </div>
+  </body>
+  <script>
+
+        const points = %%points_placeholder%%
+
+        const pointDictionary = {};
+
+        const renderDetailsFor = (packageName) => {
+          const parent = document.getElementById("package-info")
+          parent.textContent = '';
+
+          if (!packageName) {
+            parent.textContent = 'No results found. Please specify a valid partial or complete package name.';
+            return;
+          }
+
+          const point = pointDictionary[packageName];
+
+          const h3 = document.createElement("h3");
+          h3.textContent = packageName;
+          const total = document.createElement("p");
+          total.textContent = "Total Classes: " + point.Stats.TotalClasses;
+          const abstract = document.createElement("p");
+          abstract.textContent = "Abstract Classes: " + point.Stats.AbstractClasses;
+          const concrete = document.createElement("p");
+          concrete.textContent = "Concrete Classes (or Interfaces): " + point.Stats.ConcreteClasses;
+
+          const ca = document.createElement("p");
+          ca.textContent = "Ca - Afferent Couplings: " + point.Stats.Ca;
+          const ce = document.createElement("p");
+          ce.textContent = "Ce - Efferent Couplings: " + point.Stats.Ce;
+
+          const abstractness = document.createElement("p");
+          abstractness.textContent = "Abstractness: " + point.Stats.A;
+          const instability = document.createElement("p");
+          instability.textContent = "Instability: " + point.Stats.I;
+
+          const distance = document.createElement("p");
+          distance.textContent = "Distance from Main Sequence: " + point.Stats.D;
+
+          const usedByTitle = document.createElement("h4");
+          usedByTitle.textContent = "Used By (Afferent couplings):";
+          const usedByList = document.createElement("ul");
+          const usedByCollection = typeof point.UsedBy.Package === "string"
+          ? [point.UsedBy.Package]
+          : point.UsedBy.Package;
+          (usedByCollection || []).forEach((usedBy) => {
+            const li = document.createElement("li")
+            li.textContent = usedBy;
+            usedByList.appendChild(li);
+          })
+
+          const dependsUponTitle = document.createElement("h4");
+          dependsUponTitle.textContent = "Depends upon (Efferent couplings):";
+          const dependsUponList = document.createElement("ul");
+          const dependsUponCollection = typeof point.DependsUpon.Package === "string"
+          ? [point.DependsUpon.Package]
+          : point.DependsUpon.Package;
+
+          (dependsUponCollection || []).forEach((dependsUpon) => {
+            const li = document.createElement("li")
+            li.textContent = dependsUpon;
+            dependsUponList.appendChild(li);
+          })
+
+          parent.appendChild(h3);
+          parent.appendChild(total);
+          parent.appendChild(abstract);
+          parent.appendChild(concrete);
+          parent.appendChild(ca);
+          parent.appendChild(ce);
+          parent.appendChild(abstractness);
+          parent.appendChild(instability);
+          parent.appendChild(distance);
+          parent.appendChild(usedByTitle);
+          parent.appendChild(usedByList);
+          parent.appendChild(dependsUponTitle);
+          parent.appendChild(dependsUponList);
+        }
+
+        const showDetails = (e) => {
+          const packageName = e.target.getAttribute("data-tooltip");
+          renderDetailsFor(packageName);
+        }
+
+        const search = (input) => {
+          if(event.keyCode === 13) {
+              const found = Object.keys(pointDictionary).find(k => k.includes(input.value));
+              renderDetailsFor(found)
+            }
+        };
+
+        const mainReport = document.getElementById("main-report");
+
+        points.forEach((point) => {
+          const pointDiv = document.createElement("div");
+          pointDiv.classList.add("point");
+          pointDiv.style.left = 700 * point.Stats.I
+          pointDiv.style.top =  694 - (700 * point.Stats.A)
+          pointDiv.setAttribute("data-tooltip", point['@_attrs']['@_name']);
+          pointDiv.addEventListener("click", showDetails);
+          mainReport.appendChild(pointDiv);
+
+          pointDictionary[point['@_attrs']['@_name']] = point;
+        });
+
+
+        const sum = points.reduce((acc, point) => acc + point.Stats.D, 0);
+
+        const averageDistance = (sum / points.length) || 0;
+        const medianDistance = points.sort((a, b) => a.Stats.D - b.Stats.D)[Math.floor(points.length/2)].Stats.D;
+        document.getElementById("average").textContent = averageDistance;
+        document.getElementById("median").textContent = medianDistance;
+  </script>
+</html>
